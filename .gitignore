@@ -1,5 +1,8 @@
 .idea/
-
+main_model/config.yml
+**/lightning_logs
+**/wandb
+**/test_u_net
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

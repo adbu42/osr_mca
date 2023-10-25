@@ -1,6 +1,10 @@
 # Open Set Recognition using Masked Conditional Autoencoders
 Improves the model from C2AE by replacing the convolutional UNet with Transfomers
 
+Please create a config.yml file with the key "wandb_api_key" and your WANDB API KEY.
+
+Model for the UNet taken and adapted from https://github.com/milesial/Pytorch-UNet
+
 Sources:
 ```
 @inproceedings{oza2019c2ae,
@@ -25,6 +29,15 @@ Sources:
   booktitle={2022 21st IEEE International Conference on Machine Learning and Applications (ICMLA)},
   pages={190--197},
   year={2022},
+  organization={IEEE}
+}
+
+@inproceedings{perera2017extreme,
+  title={Extreme value analysis for mobile active user authentication},
+  author={Perera, Pramuditha and Patel, Vishal M},
+  booktitle={2017 12th IEEE International Conference on Automatic Face \& Gesture Recognition (FG 2017)},
+  pages={346--353},
+  year={2017},
   organization={IEEE}
 }
 ```
