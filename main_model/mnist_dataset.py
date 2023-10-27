@@ -1,20 +1,12 @@
 from datasets import load_dataset
 from torch.utils.data import Dataset
-from torchvision.transforms.functional import pil_to_tensor
+from main_model.tiny_image_dataset import image_preprocessing
 import numpy as np
 
 
-def image_preprocessing(pil_image):
-    img = pil_to_tensor(pil_image)
-    img = img.float() / 255  # set the values between 0 and 1
-    if img.size(0) == 1:
-        img = img.expand(3, 64, 64)
-    return img
-
-
-class TinyImageDataset(Dataset):
+class MNISTImageDataset(Dataset):
     def __init__(self, split='train', transform=None, target_transform=None):
-        self.image_dataset = load_dataset('Maysee/tiny-imagenet', split=split)
+        self.image_dataset = load_dataset('mnist', split=split)
         self.transform = transform
         self.target_transform = target_transform
 
@@ -22,7 +14,7 @@ class TinyImageDataset(Dataset):
         return len(self.image_dataset)
 
     def __getitem__(self, idx):
-        img = self.image_dataset[idx]['image']
+        img = self.image_dataset[idx]['image'].resize((64,64))
         img = image_preprocessing(img)
         label = self.image_dataset[idx]['label']
 
@@ -34,7 +26,7 @@ class TinyImageDataset(Dataset):
             non_match_label = self.image_dataset[non_match_idx]['label']
             if non_match_label != label:
                 label_matched = False
-        non_match_img = self.image_dataset[non_match_idx]['image']
+        non_match_img = self.image_dataset[non_match_idx]['image'].resize((64,64))
         non_match_img = image_preprocessing(non_match_img)
 
         # transformations

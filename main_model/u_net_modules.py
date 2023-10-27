@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
 
@@ -68,7 +69,34 @@ class Up(nn.Module):
 class OutConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(OutConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+        self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=2)
+        self.conv = DoubleConv(in_channels, out_channels)
 
     def forward(self, x):
+        x = self.up(x)
         return self.conv(x)
+
+
+class FiLMLayer(nn.Module):
+    def __init__(self, number_known_classes):
+        super().__init__()
+        self.conditional_vector_encoder_addition = nn.Sequential(
+            nn.Linear(number_known_classes, 512),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(512, 4096),
+        )
+        self.conditional_vector_encoder_hadamard = nn.Sequential(
+            nn.Linear(number_known_classes, 512),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(512, 4096),
+        )
+        self.conv = DoubleConv(2048, 1024)
+
+    def forward(self, feature_map, condition_vector):
+        hadamard_tensor = (self.conditional_vector_encoder_hadamard(condition_vector)
+                           .reshape((condition_vector.size(0), 1024, 2, 2)))
+        added_tensor = (self.conditional_vector_encoder_addition(condition_vector)
+                        .reshape((condition_vector.size(0), 1024, 2, 2)))
+        conditioned_feature_map = torch.mul(feature_map, hadamard_tensor) + added_tensor
+        output = torch.cat([conditioned_feature_map, feature_map], dim=1)
+        return self.conv(output)
