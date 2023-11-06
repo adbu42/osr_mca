@@ -1,0 +1,10 @@
+project_name: "test_u_net_conditional_cifar_closeness0.6"
+dataset: "cifar"
+batch_size: 128
+checkpoint: 'runs/test_u_net_conditional_cifar_closeness0.6/41uq350m/checkpoints/epoch=6-step=1918.ckpt'
+closeness_factor: 0.6
+train_split_name: 'train'
+test_split_name: 'test'
+max_epochs: 7
+alpha: 0.5
+lr: 3e-4

@@ -80,16 +80,8 @@ class OutConv(nn.Module):
 class FiLMLayer(nn.Module):
     def __init__(self, number_known_classes):
         super().__init__()
-        self.conditional_vector_encoder_addition = nn.Sequential(
-            nn.Linear(number_known_classes, 512),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(512, 4096),
-        )
-        self.conditional_vector_encoder_hadamard = nn.Sequential(
-            nn.Linear(number_known_classes, 512),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(512, 4096),
-        )
+        self.conditional_vector_encoder_addition = nn.Linear(number_known_classes, 4096)
+        self.conditional_vector_encoder_hadamard = nn.Linear(number_known_classes, 4096)
         self.conv = DoubleConv(2048, 1024)
 
     def forward(self, feature_map, condition_vector):

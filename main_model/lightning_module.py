@@ -6,12 +6,13 @@ import torch.nn.functional as F
 
 
 class C2AELightning(pl.LightningModule):
-    def __init__(self, n_classes, alpha=0.5):
+    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4):
         super().__init__()
         self.n_classes = n_classes
         self.unet = UNet(3, 3, self.n_classes)
         self.loss = nn.L1Loss()
         self.alpha = alpha
+        self.learning_rate = learning_rate
 
     def forward(self, inputs, condition_vector):
         return self.unet(inputs, condition_vector)
@@ -30,12 +31,14 @@ class C2AELightning(pl.LightningModule):
         match_loss = self.loss(model_output, x)
         non_match_loss = self.loss(non_match_model_output, x_non_match)
         overall_loss = self.alpha * match_loss + (1 - self.alpha) * non_match_loss
+        non_match_self = self.loss(non_match_model_output, x)
+        condition_difference = abs(match_loss - non_match_self)
 
         # logging
         self.log("match_loss", match_loss)
         self.log("non_match_loss", non_match_loss)
         self.log("overall_loss", overall_loss)
-
+        self.log("condition_difference", condition_difference)
         return overall_loss
 
     def test_step(self, batch, batch_idx):
@@ -61,5 +64,5 @@ class C2AELightning(pl.LightningModule):
         self.log("test_overall_loss", overall_loss)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=3e-4)
+        optimizer = optim.Adam(self.parameters(), lr=float(self.learning_rate))
         return optimizer

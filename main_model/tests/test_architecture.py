@@ -1,11 +1,11 @@
 import torch
 
-from main_model.tiny_image_dataset import TinyImageDataset
+from main_model.dataset import ImageDataset
 from torch.utils.data import DataLoader
 from main_model.u_net_architecture import UNet
 
-tiny_image = TinyImageDataset(split='train')
-train_dataloader = DataLoader(tiny_image, batch_size=2, shuffle=True)
+image_dataset = ImageDataset(split='train', dataset_type='tiny')
+train_dataloader = DataLoader(image_dataset, batch_size=2, shuffle=True)
 train_features, train_labels, _, _ = next(iter(train_dataloader))
 
 unet = UNet(3, 3, 5)

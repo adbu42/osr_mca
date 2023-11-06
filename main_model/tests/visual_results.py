@@ -1,13 +1,18 @@
 from main_model.lightning_module import C2AELightning
-from main_model.tiny_image_dataset import TinyImageDataset
-from main_model.mnist_dataset import MNISTImageDataset
+from main_model.dataset import ImageDataset
 from torch.utils.data import DataLoader
 from testing_helper_functions import show_image
 import torch.nn.functional as F
+import yaml
 
-num_classes = 10
-mnist_image = MNISTImageDataset(split='test')
-test_dataloader = DataLoader(mnist_image, batch_size=2, shuffle=True)
+# load configuration
+with open('../config.yml', 'r') as file:
+    configuration = yaml.safe_load(file)
+
+image_dataset = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
+                             is_close=True, closeness_factor=configuration['closeness_factor'])
+num_classes = image_dataset.num_classes()
+test_dataloader = DataLoader(image_dataset, batch_size=2, shuffle=True)
 test_features, test_labels, non_match_features, non_match_labels = next(iter(test_dataloader))
 show_image(test_features[0])
 show_image(test_features[1])
@@ -17,7 +22,7 @@ print(f"label of first non_match image: {non_match_labels[0]}")
 print(f"label of second non_match image: {non_match_labels[1]}")
 
 # evaluation
-model = C2AELightning.load_from_checkpoint("runs/test_u_net_conditional_mnist/vuqvytbv/checkpoints/epoch=2-step=9000.ckpt", n_classes=num_classes)
+model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=num_classes)
 
 # disable randomness, dropout, etc...
 model.eval()

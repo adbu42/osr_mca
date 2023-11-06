@@ -1,7 +1,8 @@
 # Open Set Recognition using Masked Conditional Autoencoders
 Improves the model from C2AE by replacing the convolutional UNet with Transfomers
 
-Please create a config.yml file with the key "wandb_api_key" and your WANDB API KEY.
+Please edit the file config.yml according to your environment.  
+Please add an api_key.yml with a "wandb_api_key" key to the directory.
 
 Model for the UNet taken and adapted from https://github.com/milesial/Pytorch-UNet
 

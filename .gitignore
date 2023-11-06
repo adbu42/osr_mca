@@ -1,9 +1,13 @@
 .idea/
-main_model/config.yml
 **/lightning_logs
 **/wandb
 **/test_u_net
 **/runs
+main_model/api_key.yml
+
+# csv data and arrays in txt files
+*.csv
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
