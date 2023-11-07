@@ -1,10 +1,13 @@
 project_name: "test_u_net_conditional_cifar_closeness0.6"
 dataset: "cifar"
 batch_size: 128
-checkpoint: 'runs/test_u_net_conditional_cifar_closeness0.6/41uq350m/checkpoints/epoch=6-step=1918.ckpt'
+checkpoint: 'runs/test_u_net_conditional_cifar_closeness0.6/76cbjeop/checkpoints/c2ae-epoch=09-condition_difference=0.13.ckpt'
 closeness_factor: 0.6
 train_split_name: 'train'
 test_split_name: 'test'
-max_epochs: 7
+max_epochs: 10
 alpha: 0.5
 lr: 3e-4
+checkpoint_epoch_interval: 1
+pretraining: True
+pretraining_checkpoint: 'runs/test_u_net_conditional_cifar_closeness0.6/kdbpklv6/checkpoints/c2ae-epoch=09-condition_difference=0.13.ckpt'
