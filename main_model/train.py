@@ -13,14 +13,14 @@ import wandb
 torch.set_float32_matmul_precision('high')
 
 # initialize configurations and wandb
-with open('../config.yml', 'r') as file:
+with open('config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
-with open('../api_key.yml', 'r') as file:
+with open('api_key.yml', 'r') as file:
     api_key = yaml.safe_load(file)
 
 wandb.login(key=api_key['wandb_api_key'])
-wandb_logger = WandbLogger(project=configuration['project_name'], save_dir='runs')
+wandb_logger = WandbLogger(project=configuration['project_name'], save_dir='tests/runs')
 wandb_logger.log_hyperparams(configuration)
 
 # initialize callbacks
