@@ -33,7 +33,7 @@ checkpoint_callback = ModelCheckpoint(every_n_epochs=configuration['checkpoint_e
 # initialize datasets
 image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'], is_close=True,
                            closeness_factor=configuration['closeness_factor'])
-image_test = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'], is_close=True,
+image_val = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'], is_close=True,
                           closeness_factor=configuration['closeness_factor'])
 
 # initialize lightning module
@@ -45,11 +45,11 @@ else:
 
 # initializing dataloaders
 train_dataloader = DataLoader(image_train, batch_size=configuration['batch_size'], shuffle=True)
-test_dataloader = DataLoader(image_test, batch_size=configuration['batch_size'], shuffle=False)
+val_dataloader = DataLoader(image_val, batch_size=configuration['batch_size'], shuffle=False)
 
 # training
 trainer = pl.Trainer(max_epochs=configuration['max_epochs'], logger=wandb_logger, callbacks=[checkpoint_callback])
-trainer.fit(model=c2ae, train_dataloaders=train_dataloader)
+trainer.fit(model=c2ae, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
 # testing
-trainer.test(model=c2ae, dataloaders=test_dataloader)
+#trainer.test(model=c2ae, dataloaders=test_dataloader)

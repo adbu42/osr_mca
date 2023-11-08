@@ -3,6 +3,7 @@ from main_model.u_net_architecture import UNet
 from torch import optim
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.transforms.functional import to_pil_image
 
 
 class C2AELightning(pl.LightningModule):
@@ -41,7 +42,7 @@ class C2AELightning(pl.LightningModule):
         self.log("condition_difference", condition_difference)
         return overall_loss
 
-    def test_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx):
         x, y, x_non_match, y_non_match = batch
 
         conditional_vector = F.one_hot(y, self.n_classes).float()
@@ -58,10 +59,17 @@ class C2AELightning(pl.LightningModule):
         non_match_self = self.loss(non_match_model_output, x)
 
         # logging
-        self.log("test_self_non_match_loss", non_match_self)
-        self.log("test_match_loss", match_loss)
-        self.log("test_non_match_loss", non_match_loss)
-        self.log("test_overall_loss", overall_loss)
+        self.log("val_self_non_match_loss", non_match_self)
+        self.log("val_match_loss", match_loss)
+        self.log("val_non_match_loss", non_match_loss)
+        self.log("val_overall_loss", overall_loss)
+
+        # log images
+        if batch_idx < 3:
+            pil_match = to_pil_image(model_output[0].cpu().detach())
+            pil_non_match = to_pil_image(non_match_model_output[0].cpu().detach())
+            self.logger.log_image(key=f'images_{batch_idx}', images=[pil_match, pil_non_match],
+                                  caption=['match', 'non_match'])
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=float(self.learning_rate))
