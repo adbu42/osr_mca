@@ -1,4 +1,4 @@
-import lightning.pytorch as pl
+import pytorch_lightning as pl
 from main_model.u_net_architecture import UNet
 from torch import optim
 import torch.nn as nn
@@ -68,8 +68,8 @@ class C2AELightning(pl.LightningModule):
         if batch_idx < 3:
             pil_match = to_pil_image(model_output[0].cpu().detach())
             pil_non_match = to_pil_image(non_match_model_output[0].cpu().detach())
-            self.logger.log_image(key=f'images_{batch_idx}', images=[pil_match, pil_non_match],
-                                  caption=['match', 'non_match'])
+            self.logger.log_image(key=f'images_{batch_idx}', images=[x[0], pil_match, pil_non_match],
+                                  caption=['input', 'match', 'non_match'])
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=float(self.learning_rate))

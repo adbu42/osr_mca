@@ -1,19 +1,24 @@
-from main_model.lightning_module import C2AELightning
-from main_model.dataset import ImageDataset
+from lightning_module import C2AELightning
+from dataset import ImageDataset
 from torch.utils.data import DataLoader
-import lightning.pytorch as pl
-from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.callbacks import ModelCheckpoint
+import pytorch_lightning as pl
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 import yaml
 import torch
 import wandb
+import argparse
 
+# get config argument
+parser = argparse.ArgumentParser(description='Train the C2AE model.')
+parser.add_argument('--config', help='path to config with common train settings, such as LR')
+parsed_args = parser.parse_args()
 
 # optimize torch for cuda
 torch.set_float32_matmul_precision('high')
 
 # initialize configurations and wandb
-with open('config.yml', 'r') as file:
+with open(parsed_args.config, 'r') as file:
     configuration = yaml.safe_load(file)
 
 with open('api_key.yml', 'r') as file:
