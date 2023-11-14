@@ -71,10 +71,12 @@ class OutConv(nn.Module):
         super(OutConv, self).__init__()
         self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=2)
         self.conv = DoubleConv(in_channels, out_channels)
+        self.tanh = nn.Tanh()
 
     def forward(self, x):
         x = self.up(x)
-        return self.conv(x)
+        x = self.conv(x)
+        return self.tanh(x)
 
 
 class FiLMLayer(nn.Module):
