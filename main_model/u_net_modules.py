@@ -76,7 +76,7 @@ class OutConv(nn.Module):
     def forward(self, x):
         x = self.up(x)
         x = self.conv(x)
-        return self.tanh(x)
+        return self.tanh(x)  # TODO maybe sigmoid?
 
 
 class FiLMLayer(nn.Module):
@@ -94,3 +94,13 @@ class FiLMLayer(nn.Module):
         conditioned_feature_map = torch.mul(feature_map, hadamard_tensor) + added_tensor
         output = torch.cat([conditioned_feature_map, feature_map], dim=1)
         return self.conv(output)
+
+
+class ClassificationLayer(nn.Module):
+    def __init__(self, number_known_classes):
+        super().__init__()
+        self.classifier_output = nn.Linear(4096, number_known_classes)
+
+    def forward(self, x):
+        x = x.reshape((x.size(0), 4096))
+        return self.classifier_output(x)

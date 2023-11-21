@@ -1,4 +1,5 @@
 from lightning_module import C2AELightning
+from freeze_callbacks import FreezeEncoderOrDecoder
 from dataset import ImageDataset
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
@@ -17,44 +18,37 @@ parsed_args = parser.parse_args()
 # optimize torch for cuda
 torch.set_float32_matmul_precision('high')
 
-# initialize configurations and wandb
+# initialize configurations
 with open(parsed_args.config, 'r') as file:
     configuration = yaml.safe_load(file)
 
 with open('api_key.yml', 'r') as file:
     api_key = yaml.safe_load(file)
 
+# initialize wandb
 wandb.login(key=api_key['wandb_api_key'])
 wandb_logger = WandbLogger(project=configuration['project_name'], save_dir='tests/runs')
 wandb_logger.log_hyperparams(configuration)
 
 # initialize callbacks
-checkpoint_callback = ModelCheckpoint(every_n_epochs=configuration['checkpoint_epoch_interval'],
-                                      filename='c2ae-{epoch:02d}-{condition_difference:.2f}',
-                                      monitor='condition_difference',
-                                      mode='max',
-                                      save_top_k=3)
+checkpoint_callback = ModelCheckpoint(every_n_epochs=configuration['checkpoint_epoch_interval'], save_top_k=-1)
+
+freeze_callback = FreezeEncoderOrDecoder(switch_epoch=configuration['switch_epoch'])
 
 # initialize datasets
-image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'], is_close=True,
-                           closeness_factor=configuration['closeness_factor'])
-image_val = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'], is_close=True,
-                          closeness_factor=configuration['closeness_factor'])
-
-# initialize lightning module
-if configuration['pretraining']:
-    c2ae = C2AELightning.load_from_checkpoint(configuration['pretraining_checkpoint'],
-                                              n_classes=image_train.num_classes())
-else:
-    c2ae = C2AELightning(image_train.num_classes(), configuration['alpha'], learning_rate=configuration['lr'])
+image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'],
+                           is_close=True, closeness_factor=configuration['closeness_factor'])
+image_val = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
+                         is_close=True, closeness_factor=configuration['closeness_factor'])
 
 # initializing dataloaders
 train_dataloader = DataLoader(image_train, batch_size=configuration['batch_size'], shuffle=True)
 val_dataloader = DataLoader(image_val, batch_size=configuration['batch_size'], shuffle=False)
 
-# training
-trainer = pl.Trainer(max_epochs=configuration['max_epochs'], logger=wandb_logger, callbacks=[checkpoint_callback])
-trainer.fit(model=c2ae, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
-# testing
-#trainer.test(model=c2ae, dataloaders=test_dataloader)
+# training
+c2ae = C2AELightning(image_train.num_classes(), learning_rate=configuration['lr'],
+                     switch_epoch=configuration['switch_epoch'])
+trainer = pl.Trainer(max_epochs=configuration['max_epochs'], logger=wandb_logger,
+                     callbacks=[checkpoint_callback, freeze_callback])
+trainer.fit(model=c2ae, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
