@@ -13,7 +13,7 @@ softmax = Softmax(dim=0)
 with open('../config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
-image_dataset = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'],
+image_dataset = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
                              is_close=True, closeness_factor=configuration['closeness_factor'])
 num_classes = image_dataset.num_classes()
 test_dataloader = DataLoader(image_dataset, batch_size=2, shuffle=True)

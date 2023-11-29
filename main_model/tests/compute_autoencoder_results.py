@@ -35,8 +35,8 @@ for test_features, test_labels, non_match_features, non_match_labels in test_dat
     non_match_conditional_vector[non_match_conditional_vector == 0] = -1
     # predict with the model
     # detach all tensor so no gradients are computed and the tensors are not kept in memory
-    match_prediction = model(test_features.cuda().detach(), conditional_vector.cuda().detach())
-    non_match_prediction = model(test_features.cuda().detach(), non_match_conditional_vector.cuda().detach())
+    match_prediction, _ = model(test_features.cuda().detach(), conditional_vector.cuda().detach())
+    non_match_prediction, _ = model(test_features.cuda().detach(), non_match_conditional_vector.cuda().detach())
     for i in range(len(match_prediction)):
         match_errors.append(loss(match_prediction[i].detach(), test_features[i].cuda().detach()).cpu())
         non_match_errors.append(loss(non_match_prediction[i].detach(), test_features[i].cuda().detach()).cpu())

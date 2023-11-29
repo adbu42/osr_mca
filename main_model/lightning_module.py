@@ -25,8 +25,9 @@ class C2AELightning(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y, x_non_match, y_non_match = batch
         if self.current_epoch < self.switch_epoch:
-            classification_loss = self.classification_step(x, y)
+            classification_loss, accuracy = self.classification_step(x, y)
             self.log("classification_loss", classification_loss)
+            self.log("accuracy", accuracy)
             return classification_loss
         else:
             overall_loss, condition_difference, match_loss, non_match_loss, _, _ = self.reconstruction_step(x, y, x_non_match, y_non_match)
