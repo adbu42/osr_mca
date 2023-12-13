@@ -88,5 +88,5 @@ class ClassificationLayer(nn.Module):
         self.classifier_output = nn.Linear(4096, number_known_classes)
 
     def forward(self, x):
-        x = x.reshape((x.size(0), 4096))
+        x = torch.flatten(x, start_dim=1)
         return self.classifier_output(x)
