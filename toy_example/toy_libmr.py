@@ -32,5 +32,5 @@ for test_features, test_labels, non_match_features, non_match_labels in toy_data
 
 np_match_errors = np.array(match_errors)
 np_non_match_errors = np.array(non_match_errors)
-np.savetxt("../main_model/match_errors.csv", np_match_errors, delimiter=",")
-np.savetxt("../main_model/non_match_errors.csv", np_non_match_errors, delimiter=",")
+np.savetxt("../main_model/tests/match_errors.csv", np_match_errors, delimiter=",")
+np.savetxt("../main_model/tests/non_match_errors.csv", np_non_match_errors, delimiter=",")

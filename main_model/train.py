@@ -1,5 +1,5 @@
 from lightning_module import C2AELightning
-from freeze_callbacks import FreezeEncoderOrDecoder
+from freeze_callbacks import FreezeDenseNet, FreezeUnet
 from dataset import ImageDataset
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
@@ -33,7 +33,12 @@ wandb_logger.log_hyperparams(configuration)
 # initialize callbacks
 checkpoint_callback = ModelCheckpoint(every_n_epochs=configuration['checkpoint_epoch_interval'], save_top_k=-1)
 
-freeze_callback = FreezeEncoderOrDecoder(switch_epoch=configuration['switch_epoch'])
+if configuration['architecture'] == 'unet':
+    freeze_callback = FreezeUnet(switch_epoch=configuration['switch_epoch'])
+elif configuration['architecture'] == 'densenet':
+    freeze_callback = FreezeDenseNet(switch_epoch=configuration['switch_epoch'])
+else:
+    raise ValueError('Architecture name wrong. Choose one of "unet" or "densenet"')
 
 # initialize datasets
 image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'],
@@ -48,7 +53,7 @@ val_dataloader = DataLoader(image_val, batch_size=configuration['batch_size'], s
 
 # training
 c2ae = C2AELightning(image_train.num_classes(), learning_rate=configuration['lr'],
-                     switch_epoch=configuration['switch_epoch'])
+                     switch_epoch=configuration['switch_epoch'], architecture=configuration['architecture'])
 trainer = pl.Trainer(max_epochs=configuration['max_epochs'], logger=wandb_logger,
                      callbacks=[checkpoint_callback, freeze_callback])
 trainer.fit(model=c2ae, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)

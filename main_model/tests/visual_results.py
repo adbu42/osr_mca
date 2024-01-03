@@ -10,7 +10,7 @@ import torch
 
 softmax = Softmax(dim=0)
 # load configuration
-with open('../config.yml', 'r') as file:
+with open('../configs/config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
 image_dataset = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],

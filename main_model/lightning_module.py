@@ -1,4 +1,5 @@
 import pytorch_lightning as pl
+from main_model.dense_net_architecture import DenseNet
 from main_model.u_net_architecture import UNet
 from torch import optim
 import torch.nn as nn
@@ -8,10 +9,15 @@ from torchmetrics.classification import MulticlassAccuracy
 
 
 class C2AELightning(pl.LightningModule):
-    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4, switch_epoch=5):
+    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4, switch_epoch=5, architecture='unet'):
         super().__init__()
         self.n_classes = n_classes
-        self.unet = UNet(3, 3, self.n_classes)
+        if architecture == 'unet':
+            self.neural_net = UNet(3, 3, n_classes)
+        elif architecture == 'densenet':
+            self.neural_net = DenseNet(n_classes)
+        else:
+            raise ValueError('Architecture not specified correctly, must be "unet" or "densenet"!')
         self.n1_loss = nn.L1Loss()
         self.cross_entropy = nn.CrossEntropyLoss()
         self.accuracy = MulticlassAccuracy(num_classes=self.n_classes)
@@ -20,7 +26,7 @@ class C2AELightning(pl.LightningModule):
         self.switch_epoch = switch_epoch
 
     def forward(self, inputs, condition_vector):
-        return self.unet(inputs, condition_vector)
+        return self.neural_net(inputs, condition_vector)
 
     def training_step(self, batch, batch_idx):
         x, y, x_non_match, y_non_match = batch
@@ -39,7 +45,7 @@ class C2AELightning(pl.LightningModule):
 
     def classification_step(self, x, y):
         conditional_vector = F.one_hot(y, self.n_classes).float()
-        _, classification = self.unet(x, conditional_vector)
+        _, classification = self.neural_net(x, conditional_vector)
         classification_loss = self.cross_entropy(classification, y)
         accuracy = self.accuracy(classification, y)
         return classification_loss, accuracy
@@ -51,8 +57,8 @@ class C2AELightning(pl.LightningModule):
         conditional_vector[conditional_vector == 0] = -1
         non_match_conditional_vector[non_match_conditional_vector == 0] = -1
 
-        model_output, _ = self.unet(x, conditional_vector)
-        non_match_model_output, _ = self.unet(x, non_match_conditional_vector)
+        model_output, _ = self.neural_net(x, conditional_vector)
+        non_match_model_output, _ = self.neural_net(x, non_match_conditional_vector)
         match_loss = self.n1_loss(model_output, x)
         non_match_loss = self.n1_loss(non_match_model_output, x_non_match)
         overall_loss = self.alpha * match_loss + (1 - self.alpha) * non_match_loss

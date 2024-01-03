@@ -4,7 +4,7 @@ from testing_helper_functions import show_image
 import yaml
 
 
-with open('../config.yml', 'r') as file:
+with open('../configs/config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
 image_dataset = ImageDataset(split=configuration['train_split_name'],

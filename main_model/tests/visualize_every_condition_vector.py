@@ -10,7 +10,7 @@ import torch
 
 softmax = Softmax(dim=0)
 # load configuration
-with open('../config.yml', 'r') as file:
+with open('../configs/config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
 image_dataset = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
@@ -22,7 +22,8 @@ show_image(test_features[0])
 show_image(test_features[1])
 
 # evaluation
-model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=num_classes)
+model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=num_classes,
+                                           architecture=configuration['architecture'])
 
 # disable randomness, dropout, etc...
 model.eval()

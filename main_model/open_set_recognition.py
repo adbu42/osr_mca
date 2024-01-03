@@ -8,9 +8,9 @@ from torchmetrics.classification import MulticlassAccuracy
 import torch.nn.functional as F
 import numpy as np
 
-cutoff_point = torch.tensor(0.1475)
+cutoff_point = torch.tensor(0.1)
 
-with open('config.yml', 'r') as file:
+with open('configs/config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
 
@@ -26,21 +26,24 @@ closed_dataloader = DataLoader(image_dataset_closed, batch_size=configuration['b
 open_dataloader = DataLoader(image_dataset_open, batch_size=configuration['batch_size'], shuffle=True)
 
 # instantiate model and loss
-model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=closed_num_classes)
+model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=closed_num_classes,
+                                           architecture=configuration['architecture'])
 model.eval()
-loss = nn.L1Loss()
 
-accuracy_metric = MulticlassAccuracy(num_classes=closed_num_classes).cuda()
-l1_loss = nn.L1Loss().cuda()
+accuracy_metric = MulticlassAccuracy(num_classes=closed_num_classes)
+l1_loss = nn.L1Loss()
+
 accuracy = []
 label_possibilities = [torch.full((1, configuration['batch_size']), k).squeeze() for k in range(closed_num_classes)]
 is_classified_closed = []
 is_classified_open = []
 
+closed_error_list = []
+closed_counter = 0
 for features, labels, _, _ in closed_dataloader:
     conditional_vector = F.one_hot(labels, closed_num_classes).float()
-    _, classification = model(features.cuda().detach(), conditional_vector.cuda().detach())
-    accuracy.append(accuracy_metric(classification.cuda().detach(), labels.cuda().detach()).cpu().detach())
+    classification = model(features.cuda().detach(), conditional_vector.cuda().detach())[1].cpu().detach()
+    accuracy.append(accuracy_metric(classification, labels.detach()).cpu().detach())
 
     if len(features) != configuration['batch_size']:
         label_possibilities = [torch.full((1, len(features)), k).squeeze()
@@ -49,10 +52,10 @@ for features, labels, _, _ in closed_dataloader:
     for label_possibility in label_possibilities:
         conditional_vector = F.one_hot(label_possibility, closed_num_classes).float()
         conditional_vector[conditional_vector == 0] = -1
-        reconstruction, _ = model(features.cuda().detach(), conditional_vector.cuda().detach())
+        reconstruction = model(features.cuda().detach(), conditional_vector.cuda().detach())[0].cpu().detach()
         reconstruction_error_batch = []
         for i in range(len(reconstruction)):
-            reconstruction_error = l1_loss(reconstruction[i].cuda().detach(), features[i].cuda().detach())
+            reconstruction_error = l1_loss(reconstruction[i], features[i].detach())
             reconstruction_error_batch.append(reconstruction_error.cpu().detach())
         reconstruction_error_list.append(reconstruction_error_batch)
 
@@ -65,9 +68,14 @@ for features, labels, _, _ in closed_dataloader:
             is_classified_closed.append(1)
         else:
             is_classified_closed.append(0)
+        closed_error_list.append(minimum_reconstruction_error)
+    closed_counter += 1
+    print(closed_counter/len(closed_dataloader))
 
 label_possibilities = [torch.full((1, configuration['batch_size']), k).squeeze() for k in range(closed_num_classes)]
 
+open_counter = 0
+open_error_list = []
 for features, _, _, _ in open_dataloader:
     if len(features) != configuration['batch_size']:
         label_possibilities = [torch.full((1, len(features)), k).squeeze()
@@ -76,10 +84,10 @@ for features, _, _, _ in open_dataloader:
     for label_possibility in label_possibilities:
         conditional_vector = F.one_hot(label_possibility, closed_num_classes).float()
         conditional_vector[conditional_vector == 0] = -1
-        reconstruction, _ = model(features.cuda().detach(), conditional_vector.cuda().detach())
+        reconstruction = model(features.cuda().detach(), conditional_vector.cuda().detach())[0].cpu().detach()
         reconstruction_error_batch = []
         for i in range(len(reconstruction)):
-            reconstruction_error = l1_loss(reconstruction[i].cuda().detach(), features[i].cuda().detach())
+            reconstruction_error = l1_loss(reconstruction[i], features[i].detach())
             reconstruction_error_batch.append(reconstruction_error.cpu().detach())
         reconstruction_error_list.append(reconstruction_error_batch)
 
@@ -92,9 +100,17 @@ for features, _, _, _ in open_dataloader:
             is_classified_open.append(1)
         else:
             is_classified_open.append(0)
+        open_error_list.append(minimum_reconstruction_error)
+    open_counter += 1
+    print(open_counter / len(open_dataloader))
 
 print(f'accuracy: {np.mean(accuracy)}')
 print(f'false closed: {is_classified_closed.count(0)/len(is_classified_closed)}')
 print(f'true closed: {is_classified_closed.count(1)/len(is_classified_closed)}')
 print(f'false open: {is_classified_open.count(0)/len(is_classified_open)}')
 print(f'true open: {is_classified_open.count(1)/len(is_classified_open)}')
+
+np_open_error_list = np.array(closed_error_list)
+np_closed_error_list = np.array(open_error_list)
+np.savetxt("tests/match_errors.csv", np_open_error_list, delimiter=",")
+np.savetxt("tests/non_match_errors.csv", np_closed_error_list, delimiter=",")

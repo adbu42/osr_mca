@@ -1,0 +1,13 @@
+project_name: "test_dense_unet"
+dataset: "mnist"
+architecture: 'densenet'
+batch_size: 128
+checkpoint: 'runs/cluster_checkpoints/mnist_10_120_dense.ckpt'
+closeness_factor: 0.6
+train_split_name: 'train'
+test_split_name: 'test'
+max_epochs: 3
+switch_epoch: 1
+alpha: 0.9
+lr: 3e-4
+checkpoint_epoch_interval: 8

@@ -24,7 +24,7 @@ plt.show()
 
 # line search
 prior_probability = 0.5
-lowest_value = 10
+lowest_value = 1000
 cutoff_point = 0
 for candidate in testing_data:
     if torch.isnan(mr_low.pdf(candidate)).item() is False and torch.isnan(mr_high.pdf(candidate)).item() is False:

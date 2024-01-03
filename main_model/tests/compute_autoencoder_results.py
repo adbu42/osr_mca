@@ -7,7 +7,7 @@ import numpy as np
 import yaml
 
 
-with open('../config.yml', 'r') as file:
+with open('../configs/config.yml', 'r') as file:
     configuration = yaml.safe_load(file)
 
 
@@ -18,7 +18,8 @@ num_classes = mnist_image.num_classes()
 test_dataloader = DataLoader(mnist_image, batch_size=configuration['batch_size'], shuffle=True)
 
 # instantiate model and loss
-model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=num_classes)
+model = C2AELightning.load_from_checkpoint(configuration['checkpoint'], n_classes=num_classes,
+                                           architecture=configuration['architecture'])
 model.eval()
 loss = nn.L1Loss()
 
@@ -35,11 +36,11 @@ for test_features, test_labels, non_match_features, non_match_labels in test_dat
     non_match_conditional_vector[non_match_conditional_vector == 0] = -1
     # predict with the model
     # detach all tensor so no gradients are computed and the tensors are not kept in memory
-    match_prediction, _ = model(test_features.cuda().detach(), conditional_vector.cuda().detach())
-    non_match_prediction, _ = model(test_features.cuda().detach(), non_match_conditional_vector.cuda().detach())
+    match_prediction = model(test_features.cuda().detach(), conditional_vector.cuda().detach())[0].cpu().detach()
+    non_match_prediction = model(test_features.cuda().detach(), non_match_conditional_vector.cuda().detach())[0].cpu().detach()
     for i in range(len(match_prediction)):
-        match_errors.append(loss(match_prediction[i].detach(), test_features[i].cuda().detach()).cpu())
-        non_match_errors.append(loss(non_match_prediction[i].detach(), test_features[i].cuda().detach()).cpu())
+        match_errors.append(loss(match_prediction[i].detach(), test_features[i].detach()).cpu().detach())
+        non_match_errors.append(loss(non_match_prediction[i].detach(), test_features[i].detach()).cpu().detach())
     print(len(match_errors)/len(mnist_image))
 
 np_match_errors = np.array(match_errors)
