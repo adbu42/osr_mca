@@ -3,7 +3,7 @@ from toy_modules import *
 label_possibilities = [F.one_hot(torch.tensor(k), 4).float().cuda() for k in range(4)]
 l1_loss = nn.L1Loss().cuda()
 
-toy_lightning = ToyLightning.load_from_checkpoint('tests/runs/test_toy_example/l5hhgi6q/checkpoints/epoch=299-step=42300.ckpt')
+toy_lightning = ToyLightning.load_from_checkpoint('C:/Users/adria/Desktop/Master topic/Repository/main_model/tests/runs/test_toy_example/l5hhgi6q/checkpoints/epoch=299-step=42300.ckpt')
 
 datapoints = torch.zeros((40000, 2)).cuda()
 for counter1, i in enumerate([x/10-10 for x in range(200)]):
@@ -23,7 +23,7 @@ for i in range(40000):
     loss_list = []
     for j in range(4):
         loss_list.append(l1_loss(reconstruction[j, i], datapoints[i]))
-    if min(loss_list) < 3:
+    if min(loss_list) < 2.5:
         closed_datapoints[i] = datapoints[i]
     else:
         open_datapoints[i] = datapoints[i]

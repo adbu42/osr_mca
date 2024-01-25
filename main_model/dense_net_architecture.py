@@ -8,9 +8,9 @@ import torch.nn.functional as F
 class Bottleneck(nn.Module):
     def __init__(self, in_planes, growth_rate):
         super(Bottleneck, self).__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn1 = nn.InstanceNorm2d(in_planes)
         self.conv1 = nn.Conv2d(in_planes, 4*growth_rate, kernel_size=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(4*growth_rate)
+        self.bn2 = nn.InstanceNorm2d(4*growth_rate)
         self.conv2 = nn.Conv2d(4*growth_rate, growth_rate, kernel_size=3, padding=1, bias=False)
 
     def forward(self, x):
@@ -23,7 +23,7 @@ class Bottleneck(nn.Module):
 class EncoderTransition(nn.Module):
     def __init__(self, in_planes, out_planes):
         super(EncoderTransition, self).__init__()
-        self.bn = nn.BatchNorm2d(in_planes)
+        self.bn = nn.InstanceNorm2d(in_planes)
         self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=1, bias=False)
 
     def forward(self, x):
@@ -35,7 +35,7 @@ class EncoderTransition(nn.Module):
 class DecoderTransition(nn.Module):
     def __init__(self, in_planes, out_planes):
         super(DecoderTransition, self).__init__()
-        self.bn = nn.BatchNorm2d(in_planes)
+        self.bn = nn.InstanceNorm2d(in_planes)
         self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=1, bias=False)
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear')
 
@@ -50,7 +50,7 @@ class DenseFiLMLayer(nn.Module):
         super().__init__()
         self.conditional_vector_encoder_addition = nn.Linear(number_known_classes, 384)
         self.conditional_vector_encoder_hadamard = nn.Linear(number_known_classes, 384)
-        self.batch_norm = nn.BatchNorm2d(384)
+        self.batch_norm = nn.InstanceNorm2d(384)
 
     def forward(self, feature_map, condition_vector):
         hadamard_tensor = (self.conditional_vector_encoder_hadamard(condition_vector)
@@ -76,7 +76,7 @@ class DenseNet(nn.Module):
         self.enc_trans3 = EncoderTransition(384, 192)
         self.enc_dense4 = self._make_dense_layers(Bottleneck, 192, 16)
 
-        self.enc_bn = nn.BatchNorm2d(384)
+        self.enc_bn = nn.InstanceNorm2d(384)
         self.linear = nn.Linear(384, num_classes)
 
         self.film = DenseFiLMLayer(num_classes)

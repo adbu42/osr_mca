@@ -1,29 +1,39 @@
 import pytorch_lightning as pl
 from main_model.dense_net_architecture import DenseNet
 from main_model.u_net_architecture import UNet
+from main_model.resnet import ResNet
+from main_model.resunet import ResUNet
+from main_model.simple_architecture import SimpleAutoencoder
 from torch import optim
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.transforms.functional import to_pil_image
+from torchvision.transforms.v2.functional import to_pil_image
 from torchmetrics.classification import MulticlassAccuracy
 
 
 class C2AELightning(pl.LightningModule):
-    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4, switch_epoch=5, architecture='unet'):
+    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4, switch_epoch=5, architecture='unet', val_dataset=None):
         super().__init__()
         self.n_classes = n_classes
         if architecture == 'unet':
             self.neural_net = UNet(3, 3, n_classes)
         elif architecture == 'densenet':
             self.neural_net = DenseNet(n_classes)
+        elif architecture == 'resnet':
+            self.neural_net = ResNet(n_classes)
+        elif architecture == 'resunet':
+            self.neural_net = ResUNet(n_classes)
+        elif architecture == 'simple':
+            self.neural_net = SimpleAutoencoder(n_classes)
         else:
-            raise ValueError('Architecture not specified correctly, must be "unet" or "densenet"!')
+            raise ValueError('Architecture not specified correctly!')
         self.n1_loss = nn.L1Loss()
         self.cross_entropy = nn.CrossEntropyLoss()
         self.accuracy = MulticlassAccuracy(num_classes=self.n_classes)
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.switch_epoch = switch_epoch
+        self.val_dataset = val_dataset
 
     def forward(self, inputs, condition_vector):
         return self.neural_net(inputs, condition_vector)
@@ -81,9 +91,11 @@ class C2AELightning(pl.LightningModule):
 
             # log images
             if batch_idx < 3:
-                pil_match = to_pil_image(model_output[0].cpu().detach())
-                pil_non_match = to_pil_image(non_match_model_output[0].cpu().detach())
-                self.logger.log_image(key=f'images_{batch_idx}', images=[x[0], pil_match, pil_non_match],
+                pil_match = to_pil_image(self.val_dataset.reverse_normalization(model_output[0].cpu().detach()))
+                pil_non_match = to_pil_image(self.val_dataset.reverse_normalization(
+                    non_match_model_output[0].cpu().detach()))
+                self.logger.log_image(key=f'images_{batch_idx}',
+                                      images=[self.val_dataset.reverse_normalization(x[0]), pil_match, pil_non_match],
                                       caption=['input', 'match', 'non_match'])
 
     def configure_optimizers(self):

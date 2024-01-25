@@ -7,11 +7,11 @@ from main_model.dense_net_architecture import DecoderTransition, DenseFiLMLayer,
 class UDecoderTransition(nn.Module):
     def __init__(self, in_planes, out_planes):
         super(UDecoderTransition, self).__init__()
-        self.bn = nn.BatchNorm2d(in_planes)
+        self.bn = nn.InstanceNorm2d(in_planes)
         self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=1, bias=False)
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear')
         self.in_up_conv = nn.Conv2d(out_planes*2, out_planes, kernel_size=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_planes*2)
+        self.bn2 = nn.InstanceNorm2d(out_planes*2)
 
     def forward(self, x, in_features):
         x = self.conv(F.relu(self.bn(x)))
@@ -36,7 +36,7 @@ class UDenseNet(nn.Module):
         self.enc_trans3 = EncoderTransition(384, 192)
         self.enc_dense4 = self._make_dense_layers(Bottleneck, 192, 16)
 
-        self.enc_bn = nn.BatchNorm2d(384)
+        self.enc_bn = nn.InstanceNorm2d(384)
         self.linear = nn.Linear(384, num_classes)
 
         self.film = DenseFiLMLayer(num_classes)
