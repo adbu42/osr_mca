@@ -1,8 +1,8 @@
 project_name: "test_simple_normalized"
-dataset: "mnist"
-architecture: 'simple'
+dataset: "cifar"
+architecture: 'unet'
 batch_size: 128
-checkpoint: 'tests/runs/cluster_checkpoints/mnist_10_120_simple_normalized.ckpt'
+checkpoint: 'tests/runs/cluster_checkpoints/cifar_unet_12_120_no_connections.ckpt'
 closeness_factor: 0.6
 train_split_name: 'train'
 test_split_name: 'test'
