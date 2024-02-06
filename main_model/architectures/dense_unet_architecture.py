@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from main_model.dense_net_architecture import DecoderTransition, DenseFiLMLayer, EncoderTransition, Bottleneck
+from main_model.architectures.dense_net_architecture import DenseFiLMLayer, EncoderTransition, Bottleneck
 
 
 class UDecoderTransition(nn.Module):

@@ -1,6 +1,6 @@
 from main_model.dataset import ImageDataset
 from torch.utils.data import DataLoader
-from main_model.dense_unet_architecture import *
+from main_model.architectures.dense_unet_architecture import *
 
 image_dataset = ImageDataset(split='train', dataset_type='tiny')
 train_dataloader = DataLoader(image_dataset, batch_size=2, shuffle=True)

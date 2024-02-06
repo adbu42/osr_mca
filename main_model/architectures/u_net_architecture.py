@@ -1,4 +1,4 @@
-from main_model.u_net_modules import *
+from main_model.architectures.u_net_modules import *
 
 
 class UNet(nn.Module):

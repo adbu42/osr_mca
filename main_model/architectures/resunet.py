@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from main_model.resnet import Bottleneck, Up, ResnetFiLMLayer
+from main_model.architectures.resnet import Bottleneck, Up, ResnetFiLMLayer
 import torch
 
 

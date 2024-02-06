@@ -1,4 +1,4 @@
-from main_model.resunet import ResUNet
+from main_model.architectures.resunet import ResUNet
 import torch
 
 net = ResUNet()
