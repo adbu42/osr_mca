@@ -170,3 +170,28 @@ class FreezeSimple(BaseFinetuning):
             self.unfreeze_and_add_param_group(pl_module.neural_net.deconv2, optimizer=optimizer, train_bn=True)
             self.unfreeze_and_add_param_group(pl_module.neural_net.deconv3, optimizer=optimizer, train_bn=True)
             self.unfreeze_and_add_param_group(pl_module.neural_net.deconv4, optimizer=optimizer, train_bn=True)
+
+
+class FreezeWideNet(BaseFinetuning):
+    def __init__(self, switch_epoch=5):
+        super().__init__()
+        self.switch_epoch = switch_epoch
+
+    def freeze_before_training(self, pl_module: "pl.LightningModule") -> None:
+        self.freeze(pl_module.neural_net.film_layer)
+        self.freeze(pl_module.neural_net.up1)
+        self.freeze(pl_module.neural_net.up2)
+        self.freeze(pl_module.neural_net.outc)
+
+    def finetune_function(self, pl_module: "pl.LightningModule", epoch: int, optimizer: Optimizer) -> None:
+        if epoch == self.switch_epoch:
+            self.freeze(pl_module.neural_net.conv1)
+            self.freeze(pl_module.neural_net.block1)
+            self.freeze(pl_module.neural_net.block2)
+            self.freeze(pl_module.neural_net.block3)
+            self.freeze(pl_module.neural_net.fc)
+
+            self.unfreeze_and_add_param_group(pl_module.neural_net.film_layer, optimizer=optimizer, train_bn=True)
+            self.unfreeze_and_add_param_group(pl_module.neural_net.up1, optimizer=optimizer, train_bn=True)
+            self.unfreeze_and_add_param_group(pl_module.neural_net.up2, optimizer=optimizer, train_bn=True)
+            self.unfreeze_and_add_param_group(pl_module.neural_net.outc, optimizer=optimizer, train_bn=True)

@@ -43,6 +43,8 @@ elif configuration['architecture'] == 'resunet':
     freeze_callback = FreezeResUNet(switch_epoch=configuration['switch_epoch'])
 elif configuration['architecture'] == 'simple':
     freeze_callback = FreezeSimple(switch_epoch=configuration['switch_epoch'])
+elif configuration['architecture'] == 'widenet':
+    freeze_callback = FreezeWideNet(switch_epoch=configuration['switch_epoch'])
 else:
     raise ValueError('Architecture name wrong!')
 

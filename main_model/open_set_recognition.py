@@ -100,7 +100,7 @@ for features, _, _, _ in open_dataloader:
             is_classified_open.append(1)
         else:
             is_classified_open.append(0)
-        open_error_list.append(minimum_reconstruction_error)
+        open_error_list.append(minimum_reconstruction_error) #here
     open_counter += 1
     print(open_counter / len(open_dataloader))
 

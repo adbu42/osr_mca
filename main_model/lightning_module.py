@@ -4,6 +4,7 @@ from main_model.architectures.u_net_architecture import UNet
 from main_model.architectures.resnet import ResNet
 from main_model.architectures.resunet import ResUNet
 from main_model.architectures.simple_architecture import SimpleAutoencoder
+from main_model.architectures.wide_net import WideResNet
 from torch import optim
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,6 +26,8 @@ class C2AELightning(pl.LightningModule):
             self.neural_net = ResUNet(n_classes)
         elif architecture == 'simple':
             self.neural_net = SimpleAutoencoder(n_classes)
+        elif architecture == 'widenet':
+            self.neural_net = WideResNet(n_classes)
         else:
             raise ValueError('Architecture not specified correctly!')
         self.n1_loss = nn.L1Loss()

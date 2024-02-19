@@ -1,8 +1,8 @@
-project_name: "test_simple_normalized"
+project_name: "test_wide_net"
 dataset: "cifar"
-architecture: 'unet'
-batch_size: 128
-checkpoint: 'tests/runs/cluster_checkpoints/cifar_unet_12_120_no_connections.ckpt'
+architecture: 'widenet'
+batch_size: 32
+checkpoint: 'tests/runs/cluster_checkpoints/cifar_widenet_12_120.ckpt'
 closeness_factor: 0.6
 train_split_name: 'train'
 test_split_name: 'test'
