@@ -50,7 +50,8 @@ else:
 
 # initialize datasets
 image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'],
-                           is_close=True, closeness_factor=configuration['closeness_factor'])
+                           is_close=True, closeness_factor=configuration['closeness_factor'],
+                           augmented=configuration['augmented'])
 image_val = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
                          is_close=True, closeness_factor=configuration['closeness_factor'])
 

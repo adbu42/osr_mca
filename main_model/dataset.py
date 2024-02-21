@@ -2,48 +2,57 @@ from datasets import load_dataset
 from torch.utils.data import Dataset
 import numpy as np
 from torchvision.transforms import v2
+from torchvision.transforms import AutoAugmentPolicy
 
 
 class ImageDataset(Dataset):
-    def __init__(self, split='train', dataset_type='mnist', closeness_factor=1.0, is_close=True):
+    def __init__(self, split='train', dataset_type='mnist', closeness_factor=1.0, is_close=True, augmented=False):
         self.image_key = 'image'
+        self.augment_transform = None
         if dataset_type == 'mnist':
             image_dataset_huggingface = load_dataset('mnist', split=split)
             self.mean = [0.5, 0.5, 0.5]
             self.std = [0.5, 0.5, 0.5]
-            self.transform = v2.Compose([
-                v2.Grayscale(num_output_channels=3),
-                v2.Resize((64, 64)),
-                v2.ToTensor(),
-                v2.Normalize(self.mean, self.std)
-            ])
+            self.augment_transform = v2.AutoAugment(policy=AutoAugmentPolicy("svhn"))
         elif dataset_type == 'tiny':
             image_dataset_huggingface = load_dataset('Maysee/tiny-imagenet', split=split)
             self.mean = [0.4802, 0.4481, 0.3975]
             self.std = [0.2770, 0.2691, 0.2821]
+            self.augment_transform = v2.AutoAugment(policy=AutoAugmentPolicy("imagenet"))
         elif dataset_type == 'svhn':
             image_dataset_huggingface = load_dataset('svhn', 'cropped_digits', split=split)
             self.mean = [0.4377, 0.4438, 0.4728]
             self.std = [0.1980, 0.2010, 0.1970]
+            self.augment_transform = v2.AutoAugment(policy=AutoAugmentPolicy("svhn"))
         elif dataset_type == 'cifar':
             image_dataset_huggingface = load_dataset('cifar10', split=split)
             self.mean = [0.4914, 0.4822, 0.4465]
             self.std = [0.2023, 0.1994, 0.2010]
             self.image_key = 'img'
+            self.augment_transform = v2.AutoAugment(policy=AutoAugmentPolicy("cifar10"))
         elif dataset_type == 'cifar_more':
             image_dataset_huggingface_more = load_dataset('cifar100', split=split)
             image_dataset_huggingface = load_dataset('cifar10', split=split)
             self.mean = [0.4914, 0.4822, 0.4465]
             self.std = [0.2023, 0.1994, 0.2010]
             self.image_key = 'img'
+            self.augment_transform = v2.AutoAugment(policy=AutoAugmentPolicy("cifar10"))
         else:
             raise ValueError('Dataset not specified correctly!')
 
-        self.transform = v2.Compose([
-            v2.Resize((64, 64)),
-            v2.ToTensor(),
-            v2.Normalize(self.mean, self.std)
-        ])
+        if split == "train" and augmented:
+            self.transform = v2.Compose([
+                v2.Resize((64, 64)),
+                v2.ToTensor(),
+                self.augment_transform,
+                v2.Normalize(self.mean, self.std)
+            ])
+        else:
+            self.transform = v2.Compose([
+                v2.Resize((64, 64)),
+                v2.ToTensor(),
+                v2.Normalize(self.mean, self.std)
+            ])
 
         chosen_classes = len(image_dataset_huggingface.unique('label')) * closeness_factor
         if is_close:
