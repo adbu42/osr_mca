@@ -1,11 +1,11 @@
-project_name: "test_wide_net"
-dataset: "tiny"
-architecture: 'simple'
+project_name: "test_masked_pretraining"
+dataset: "cifar"
+architecture: 'unet'
 batch_size: 128
-checkpoint: 'tests/runs/cluster_checkpoints/tiny_10_120_simple_normalized.ckpt'
-closeness_factor: 0.1
+checkpoint: 'tests/runs/cluster_checkpoints/cifar_10_120_small_unet_003_early_epoch.ckpt'
+closeness_factor: 0.6
 train_split_name: 'train'
-test_split_name: 'valid'
+test_split_name: 'test'
 max_epochs: 10
 switch_epoch: 1
 alpha: 0.9

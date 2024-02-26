@@ -37,19 +37,17 @@ class SimpleFiLMLayer(nn.Module):
         return conditioned_feature_map#self.conv(output)
 
 
-
-
 class SimpleAutoencoder(nn.Module):
     def __init__(self, n_classes):
         super(SimpleAutoencoder, self).__init__()
         d = 128
-        self.deconv1 = nn.ConvTranspose2d(512, d * 2, 4, 1, 0)
-        self.deconv1_bn = nn.InstanceNorm2d(d * 2)
-        self.deconv2 = nn.ConvTranspose2d(d * 2, d * 2, 4, 2, 1)
+        self.deconv1 = nn.ConvTranspose2d(512, d * 4, 4, 1, 0)
+        self.deconv1_bn = nn.InstanceNorm2d(d * 4)
+        self.deconv2 = nn.ConvTranspose2d(d * 4, d * 2, 4, 2, 1)
         self.deconv2_bn = nn.InstanceNorm2d(d * 2)
-        self.deconv3 = nn.ConvTranspose2d(d * 2, d, 4, 2, 1)
-        self.deconv3_bn = nn.InstanceNorm2d(d)
-        self.deconv4 = nn.ConvTranspose2d(d, 3, 4, 2, 1)
+        self.deconv3 = nn.ConvTranspose2d(d * 2, d//2, 4, 2, 1)
+        self.deconv3_bn = nn.InstanceNorm2d(d//2)
+        self.deconv4 = nn.ConvTranspose2d(d//2, 3, 4, 2, 1)
 
         self.film_layer = SimpleFiLMLayer(n_classes)
         self.conv1 = nn.Conv2d(3, d // 2, 4, 2, 1)

@@ -17,7 +17,7 @@ class C2AELightning(pl.LightningModule):
         super().__init__()
         self.n_classes = n_classes
         if architecture == 'unet':
-            self.neural_net = UNet(3, 3, n_classes)
+            self.neural_net = UNet(n_classes)
         elif architecture == 'densenet':
             self.neural_net = DenseNet(n_classes)
         elif architecture == 'resnet':
