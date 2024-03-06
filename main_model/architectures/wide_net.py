@@ -1,24 +1,23 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from main_model.architectures.u_net_modules import Up, DoubleConv
+from main_model.architectures.u_net_modules import Up
 
 
 class WideFiLMLayer(nn.Module):
-    def __init__(self, number_known_classes):
+    def __init__(self, number_known_classes, widen_factor):
         super().__init__()
-        self.conditional_vector_encoder_addition = nn.Linear(number_known_classes, 2560)
-        self.conditional_vector_encoder_hadamard = nn.Linear(number_known_classes, 2560)
-        self.conv = DoubleConv(1280, 640)
+        self.widen_factor = widen_factor
+        self.conditional_vector_encoder_addition = nn.Linear(number_known_classes, 64*self.widen_factor*4)
+        self.conditional_vector_encoder_hadamard = nn.Linear(number_known_classes, 64*self.widen_factor*4)
 
     def forward(self, feature_map, condition_vector):
         hadamard_tensor = (self.conditional_vector_encoder_hadamard(condition_vector)
-                           .reshape((condition_vector.size(0), 640, 2, 2)))
+                           .reshape((condition_vector.size(0), 64*self.widen_factor, 2, 2)))
         added_tensor = (self.conditional_vector_encoder_addition(condition_vector)
-                        .reshape((condition_vector.size(0), 640, 2, 2)))
-        conditioned_feature_map = torch.mul(feature_map, hadamard_tensor) + added_tensor
-        output = torch.cat([conditioned_feature_map, feature_map], dim=1)
-        return self.conv(output)
+                        .reshape((condition_vector.size(0), 64*self.widen_factor, 2, 2)))
+        output = torch.mul(feature_map, hadamard_tensor) + added_tensor
+        return output
 
 
 class BasicBlock(nn.Module):
@@ -86,7 +85,7 @@ class WideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc = nn.Linear(2560, num_classes)
+        self.fc = nn.Linear(nChannels[3]*4, num_classes)
         self.nChannels = nChannels[3]
 
         for m in self.modules():
@@ -98,11 +97,12 @@ class WideResNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
-        self.up1 = (Up(640, 320))
-        self.up2 = (Up(320, 160))
+        self.up1 = (Up(64*widen_factor*2, 32*widen_factor))
+        self.up2 = (Up(32*widen_factor*2, 16*widen_factor))
+        self.up3 = (Up(16*widen_factor*2, 16, stride=1))
         self.upsampling = nn.Upsample(scale_factor=8, mode='bilinear')
-        self.film_layer = WideFiLMLayer(num_classes)
-        self.outc = nn.Conv2d(160, 3, kernel_size=3, stride=1, padding=1, bias=False)
+        self.film_layer = WideFiLMLayer(num_classes, widen_factor)
+        self.outc = nn.ConvTranspose2d(32, 3, kernel_size=3, stride=1, padding=1)
         self.tanh = nn.Tanh()
 
     def forward(self, x, condition_vector):
@@ -115,7 +115,8 @@ class WideResNet(nn.Module):
         classification = out.flatten(1)
         out = self.film_layer(out, condition_vector)
         out = self.upsampling(out)
-        out = self.up1(out, out3)
-        out = self.up2(out, out2)
-        out = self.outc(out)
+        out = self.up1(out, out4)
+        out = self.up2(out, out3)
+        out = self.up3(out, out2)
+        out = self.outc(torch.cat([out1, out], dim=1))
         return self.tanh(out), self.fc(classification)

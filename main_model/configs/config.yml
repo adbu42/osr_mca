@@ -1,13 +1,13 @@
-project_name: "test_masked_pretraining"
+project_name: "test_new_widenet"
 dataset: "cifar"
-architecture: 'unet'
-batch_size: 128
+architecture: 'widenet'
+batch_size: 32
 checkpoint: 'tests/runs/cluster_checkpoints/cifar_10_120_small_unet_003_early_epoch.ckpt'
 closeness_factor: 0.6
 train_split_name: 'train'
 test_split_name: 'test'
 max_epochs: 10
-switch_epoch: 1
+switch_epoch: 0
 alpha: 0.9
 lr: 3e-4
 checkpoint_epoch_interval: 8
