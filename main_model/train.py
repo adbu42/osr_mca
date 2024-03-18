@@ -52,6 +52,7 @@ else:
 image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'],
                            is_close=True, closeness_factor=configuration['closeness_factor'],
                            augmented=configuration['augmented'])
+
 image_val = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
                          is_close=True, closeness_factor=configuration['closeness_factor'])
 
@@ -63,7 +64,7 @@ val_dataloader = DataLoader(image_val, batch_size=configuration['batch_size'], s
 # training
 c2ae = C2AELightning(image_train.num_classes(), learning_rate=configuration['lr'],
                      switch_epoch=configuration['switch_epoch'], architecture=configuration['architecture'],
-                     val_dataset=image_val)
+                     val_dataset=image_val, pretraining_checkpoint=configuration['pretraining_checkpoint'])
 trainer = pl.Trainer(max_epochs=configuration['max_epochs'], logger=wandb_logger,
                      callbacks=[checkpoint_callback, freeze_callback])
 trainer.fit(model=c2ae, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)

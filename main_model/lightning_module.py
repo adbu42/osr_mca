@@ -1,4 +1,6 @@
 import pytorch_lightning as pl
+import torch
+
 from main_model.architectures.dense_net_architecture import DenseNet
 from main_model.architectures.u_net_architecture import UNet
 from main_model.architectures.resnet import ResNet
@@ -13,7 +15,8 @@ from torchmetrics.classification import MulticlassAccuracy
 
 
 class C2AELightning(pl.LightningModule):
-    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4, switch_epoch=5, architecture='unet', val_dataset=None):
+    def __init__(self, n_classes, alpha=0.5, learning_rate=3e-4, switch_epoch=5, architecture='unet', val_dataset=None,
+                 pretraining_checkpoint=None):
         super().__init__()
         self.n_classes = n_classes
         if architecture == 'unet':
@@ -30,6 +33,11 @@ class C2AELightning(pl.LightningModule):
             self.neural_net = WideResNet(n_classes)
         else:
             raise ValueError('Architecture not specified correctly!')
+        if pretraining_checkpoint is not None:
+            checkpoint = torch.load(pretraining_checkpoint)
+            encoder_weights = {k[19:]: v for k, v in checkpoint["state_dict"].items()
+                               if k.startswith("neural_net.encoder.")}
+            self.neural_net.encoder.load_state_dict(encoder_weights)
         self.n1_loss = nn.L1Loss()
         self.cross_entropy = nn.CrossEntropyLoss()
         self.accuracy = MulticlassAccuracy(num_classes=self.n_classes)

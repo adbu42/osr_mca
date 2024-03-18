@@ -63,16 +63,11 @@ class NetworkBlock(nn.Module):
         return self.layer(x)
 
 
-class WideResNet(nn.Module):
-    def __init__(self, num_classes):
-        super(WideResNet, self).__init__()
-        depth = 28
-        drop_rate = 0.0
-        widen_factor = 10
-        nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
+class WideEncoder(nn.Module):
+    def __init__(self, depth, drop_rate, nChannels, block):
+        super(WideEncoder, self).__init__()
         assert ((depth - 4) % 6 == 0)
         n = (depth - 4) / 6
-        block = BasicBlock
         # 1st conv before any network block
         self.conv1 = nn.Conv2d(3, nChannels[0], kernel_size=3, stride=1,
                                padding=1, bias=False)
@@ -85,8 +80,6 @@ class WideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc = nn.Linear(nChannels[3]*4, num_classes)
-        self.nChannels = nChannels[3]
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -97,26 +90,62 @@ class WideResNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
-        self.up1 = (Up(64*widen_factor*2, 32*widen_factor))
-        self.up2 = (Up(32*widen_factor*2, 16*widen_factor))
-        self.up3 = (Up(16*widen_factor*2, 16, stride=1))
-        self.upsampling = nn.Upsample(scale_factor=8, mode='bilinear')
-        self.film_layer = WideFiLMLayer(num_classes, widen_factor)
-        self.outc = nn.ConvTranspose2d(32, 3, kernel_size=3, stride=1, padding=1)
-        self.tanh = nn.Tanh()
-
-    def forward(self, x, condition_vector):
+    def forward(self, x):
         out1 = self.conv1(x)
         out2 = self.block1(out1)
         out3 = self.block2(out2)
         out4 = self.block3(out3)
         out = self.relu(self.bn1(out4))
         out = F.avg_pool2d(out, 8)
-        classification = out.flatten(1)
-        out = self.film_layer(out, condition_vector)
+        return out, out1, out2, out3, out4
+
+
+class WideClassifier(nn.Module):
+    def __init__(self, num_classes, nChannels):
+        super(WideClassifier, self).__init__()
+
+        self.fc = nn.Linear(nChannels[3]*4, num_classes)
+
+    def forward(self, x):
+        classification = x.flatten(1)
+        return self.fc(classification)
+
+
+class WideDecoder(nn.Module):
+    def __init__(self, num_classes, widen_factor):
+        super(WideDecoder, self).__init__()
+        self.up1 = (Up(64 * widen_factor * 2, 32 * widen_factor))
+        self.up2 = (Up(32 * widen_factor * 2, 16 * widen_factor))
+        self.up3 = (Up(16 * widen_factor * 2, 16, stride=1))
+        self.upsampling = nn.Upsample(scale_factor=8, mode='bilinear')
+        self.film_layer = WideFiLMLayer(num_classes, widen_factor)
+        self.outc = nn.ConvTranspose2d(32, 3, kernel_size=3, stride=1, padding=1)
+        self.tanh = nn.Tanh()
+
+    def forward(self, x, condition_vector):
+        out = self.film_layer(x[0], condition_vector)
         out = self.upsampling(out)
-        out = self.up1(out, out4)
-        out = self.up2(out, out3)
-        out = self.up3(out, out2)
-        out = self.outc(torch.cat([out1, out], dim=1))
-        return self.tanh(out), self.fc(classification)
+        out = self.up1(out, x[4])
+        out = self.up2(out, x[3])
+        out = self.up3(out, x[2])
+        out = self.outc(torch.cat([x[1], out], dim=1))
+        return self.tanh(out)
+
+
+class WideResNet(nn.Module):
+    def __init__(self, num_classes):
+        super(WideResNet, self).__init__()
+        depth = 28
+        drop_rate = 0.0
+        widen_factor = 10
+        nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
+        block = BasicBlock
+        self.encoder = WideEncoder(depth, drop_rate, nChannels, block)
+        self.decoder = WideDecoder(num_classes, widen_factor)
+        self.classifier = WideClassifier(num_classes, nChannels)
+
+    def forward(self, x, condition_vector):
+        feature_vector = self.encoder(x)
+        classification = self.classifier(feature_vector[0])
+        out = self.decoder(feature_vector, condition_vector)
+        return out, classification
