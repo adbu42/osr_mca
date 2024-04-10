@@ -23,11 +23,11 @@ class WideFiLMLayer(nn.Module):
 class BasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, drop_rate=0.0):
         super(BasicBlock, self).__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn1 = nn.BatchNorm2d(in_planes, track_running_stats=False)
         self.relu1 = nn.ReLU(inplace=True)
         self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_planes)
+        self.bn2 = nn.BatchNorm2d(out_planes, track_running_stats=False)
         self.relu2 = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1,
                                padding=1, bias=False)
@@ -78,7 +78,7 @@ class WideEncoder(nn.Module):
         # 3rd block
         self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, drop_rate)
         # global average pooling and classifier
-        self.bn1 = nn.BatchNorm2d(nChannels[3])
+        self.bn1 = nn.BatchNorm2d(nChannels[3], track_running_stats=False)
         self.relu = nn.ReLU(inplace=True)
 
         for m in self.modules():
@@ -96,7 +96,7 @@ class WideEncoder(nn.Module):
         out3 = self.block2(out2)
         out4 = self.block3(out3)
         out = self.relu(self.bn1(out4))
-        out = F.avg_pool2d(out, 8)
+        out = F.avg_pool2d(out, 4)
         return out, out1, out2, out3, out4
 
 
@@ -117,10 +117,10 @@ class WideDecoder(nn.Module):
         self.up1 = (Up(64 * widen_factor * 2, 32 * widen_factor))
         self.up2 = (Up(32 * widen_factor * 2, 16 * widen_factor))
         self.up3 = (Up(16 * widen_factor * 2, 16, stride=1))
-        self.upsampling = nn.Upsample(scale_factor=8, mode='bilinear')
+        self.upsampling = nn.Upsample(scale_factor=4, mode='bilinear')
         self.film_layer = WideFiLMLayer(num_classes, widen_factor)
         self.outc = nn.ConvTranspose2d(32, 3, kernel_size=3, stride=1, padding=1)
-        self.tanh = nn.Tanh()
+        #self.tanh = nn.Tanh()
 
     def forward(self, x, condition_vector):
         out = self.film_layer(x[0], condition_vector)
@@ -129,7 +129,7 @@ class WideDecoder(nn.Module):
         out = self.up2(out, x[3])
         out = self.up3(out, x[2])
         out = self.outc(torch.cat([x[1], out], dim=1))
-        return self.tanh(out)
+        return out
 
 
 class WideResNet(nn.Module):

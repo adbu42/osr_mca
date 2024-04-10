@@ -42,14 +42,14 @@ class ImageDataset(Dataset):
 
         if split == "train" and augmented:
             self.transform = v2.Compose([
-                v2.Resize((64, 64)),
+                v2.Resize((32, 32)),
                 v2.ToTensor(),
                 self.augment_transform,
                 v2.Normalize(self.mean, self.std)
             ])
         else:
             self.transform = v2.Compose([
-                v2.Resize((64, 64)),
+                v2.Resize((32, 32)),
                 v2.ToTensor(),
                 v2.Normalize(self.mean, self.std)
             ])

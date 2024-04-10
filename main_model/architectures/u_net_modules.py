@@ -7,7 +7,7 @@ class Down(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, 4, 2, 1)
-        self.instance_norm = nn.InstanceNorm2d(out_channels)
+        self.instance_norm = nn.BatchNorm2d(out_channels, track_running_stats=False)
 
     def forward(self, x):
         return F.leaky_relu(self.instance_norm(self.conv(x)), 0.2)
@@ -22,7 +22,7 @@ class Up(nn.Module):
 
         self.up = nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.InstanceNorm2d(out_channels)
+            nn.BatchNorm2d(out_channels, track_running_stats=False)
         )
 
     def forward(self, x1, x2):
@@ -33,12 +33,12 @@ class Up(nn.Module):
 class OutConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(OutConv, self).__init__()
-        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=4, stride=2, padding=1)
-        self.tanh = nn.Tanh()
+        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        #self.tanh = nn.Tanh()
 
     def forward(self, x1, x2):
         x = torch.cat([x2, x1], dim=1)
-        return self.tanh(self.up(x))
+        return self.up(x)
 
 
 class FiLMLayer(nn.Module):
@@ -64,3 +64,13 @@ class ClassificationLayer(nn.Module):
     def forward(self, x):
         x = torch.flatten(x, start_dim=1)
         return self.classifier_output(x)
+
+
+class InConv(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, 3, 1, 1)
+        self.instance_norm = nn.BatchNorm2d(out_channels, track_running_stats=False)
+
+    def forward(self, x):
+        return F.leaky_relu(self.instance_norm(self.conv(x)), 0.2)

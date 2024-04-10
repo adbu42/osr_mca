@@ -5,7 +5,7 @@ class UNet(nn.Module):
     def __init__(self, n_classes):
         super(UNet, self).__init__()
 
-        self.inc = (Down(3, 64))
+        self.inc = (InConv(3, 64))
         self.down1 = (Down(64, 128))
         self.down2 = (Down(128, 256))
         self.down3 = (Down(256, 512))

@@ -1,32 +1,38 @@
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score, roc_curve
 
-match_errors = np.genfromtxt("tests/match_errors.csv", delimiter=",")
-non_match_errors = np.genfromtxt("tests/non_match_errors.csv", delimiter=",")
-match_errors_sorted = np.sort(match_errors)
+# Load the error distributions from CSV files
+def load_error_distribution(file_path):
+    df = pd.read_csv(file_path)
+    return df.values
 
-P = len(non_match_errors)
-N = len(match_errors)
-roc_curve = np.zeros((len(match_errors), 2))
+# Load error distributions from CSV files
+error_dist1 = load_error_distribution("tests/match_errors.csv")
+error_dist2 = load_error_distribution("tests/non_match_errors.csv")
 
-for i, threshold in enumerate(match_errors_sorted):
-    TP = (non_match_errors >= threshold).sum()
-    FP = (match_errors > threshold).sum()
-    FN = (non_match_errors < threshold).sum()
-    TN = (match_errors < threshold).sum()
-    TPR = TP/(TP + FN)
-    FPR = FP/(FP + TN)
-    roc_curve[i, 0] = TPR
-    roc_curve[i, 1] = FPR
+# Combine the error distributions
+combined_errors = np.concatenate([error_dist1, error_dist2])
 
+# Create labels (0 for error_dist1, 1 for error_dist2)
+labels = np.concatenate([np.zeros(len(error_dist1)), np.ones(len(error_dist2))])
 
-plt.plot(roc_curve[:, 1], roc_curve[:, 0])
-plt.xlim(0, 1)
-plt.ylim(0, 1)
+# Calculate ROC curve
+fpr, tpr, thresholds = roc_curve(labels, combined_errors)
+
+# Plot ROC curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='b', label='ROC curve')
+plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend()
+plt.grid(True)
 plt.show()
 
-auc = 0
-for i in range(1, len(roc_curve)):
-    auc += ((roc_curve[i-1, 1] - roc_curve[i, 1]) * roc_curve[i, 0]
-            + 0.5 * ((roc_curve[i-1, 1] - roc_curve[i, 1]) * (roc_curve[i-1, 0] - roc_curve[i, 0])))
-print(auc)
+# Calculate AUC score
+auc_score = roc_auc_score(labels, combined_errors)
+
+print(f"AUC score for the combined error distributions: {auc_score:.4f}")

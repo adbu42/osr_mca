@@ -1,8 +1,8 @@
-project_name: "test_unet_with_x32"
+project_name: "test_simple_with_x32"
 dataset: "cifar"
-architecture: 'unet'
+architecture: 'widenet'
 batch_size: 128
-checkpoint: 'runs/cluster_checkpoints/original_unet_no_norm.ckpt'
+checkpoint: 'tests/runs/cluster_checkpoints/original_unet_cifar.ckpt'
 closeness_factor: 0.6
 train_split_name: 'train'
 test_split_name: 'test'
