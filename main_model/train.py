@@ -1,4 +1,5 @@
 from lightning_module import C2AELightning
+from open_set_recognition import osr
 from freeze_callbacks import *
 from dataset import ImageDataset
 from torch.utils.data import DataLoader
@@ -9,6 +10,9 @@ import yaml
 import torch
 import wandb
 import argparse
+import numpy as np
+from sklearn.metrics import roc_auc_score, roc_curve
+
 
 # get config argument
 parser = argparse.ArgumentParser(description='Train the C2AE model.')
@@ -50,11 +54,11 @@ else:
 
 # initialize datasets
 image_train = ImageDataset(split=configuration['train_split_name'], dataset_type=configuration['dataset'],
-                           is_close=True, closeness_factor=configuration['closeness_factor'],
+                           is_close=True, chosen_classes=configuration['chosen_classes'],
                            augmented=configuration['augmented'])
 
 image_val = ImageDataset(split=configuration['test_split_name'], dataset_type=configuration['dataset'],
-                         is_close=True, closeness_factor=configuration['closeness_factor'])
+                         is_close=True, chosen_classes=configuration['chosen_classes'])
 
 # initializing dataloaders
 train_dataloader = DataLoader(image_train, batch_size=configuration['batch_size'], shuffle=True)
@@ -68,3 +72,11 @@ c2ae = C2AELightning(image_train.num_classes(), learning_rate=configuration['lr'
 trainer = pl.Trainer(max_epochs=configuration['max_epochs'], logger=wandb_logger,
                      callbacks=[checkpoint_callback, freeze_callback])
 trainer.fit(model=c2ae, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
+
+
+if configuration['calculate_osr']:
+    closed_errors, open_errors = osr(c2ae.cuda(), configuration)
+    combined_errors = np.concatenate([closed_errors, open_errors])
+    labels = np.concatenate([np.zeros(len(closed_errors)), np.ones(len(open_errors))])
+    auc_score = roc_auc_score(labels, combined_errors)
+    wandb.log({'auc_score': auc_score})

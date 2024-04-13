@@ -12,6 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms.v2.functional import to_pil_image
 from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics.classification import MulticlassF1Score
 
 
 class C2AELightning(pl.LightningModule):
@@ -41,6 +42,7 @@ class C2AELightning(pl.LightningModule):
         self.n1_loss = nn.L1Loss()
         self.cross_entropy = nn.CrossEntropyLoss()
         self.accuracy = MulticlassAccuracy(num_classes=self.n_classes)
+        self.f1_score = MulticlassF1Score(num_classes=self.n_classes)
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.switch_epoch = switch_epoch
@@ -52,9 +54,10 @@ class C2AELightning(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y, x_non_match, y_non_match = batch
         if self.current_epoch < self.switch_epoch:
-            classification_loss, accuracy = self.classification_step(x, y)
+            classification_loss, accuracy, f1_score = self.classification_step(x, y)
             self.log("classification_loss", classification_loss)
             self.log("accuracy", accuracy)
+            self.log("f1_score", f1_score)
             return classification_loss
         else:
             overall_loss, condition_difference, match_loss, non_match_loss, _, _ = self.reconstruction_step(x, y, x_non_match, y_non_match)
@@ -69,7 +72,8 @@ class C2AELightning(pl.LightningModule):
         _, classification = self.neural_net(x, conditional_vector)
         classification_loss = self.cross_entropy(classification, y)
         accuracy = self.accuracy(classification, y)
-        return classification_loss, accuracy
+        f1_score = self.f1_score(classification, y)
+        return classification_loss, accuracy, f1_score
 
     def reconstruction_step(self, x, y, x_non_match, y_non_match):
         conditional_vector = F.one_hot(y, self.n_classes).float()
@@ -90,9 +94,10 @@ class C2AELightning(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, y, x_non_match, y_non_match = batch
         if self.current_epoch < self.switch_epoch:
-            classification_loss, accuracy = self.classification_step(x, y)
+            classification_loss, accuracy, f1_score = self.classification_step(x, y)
             self.log("val_classification_loss", classification_loss)
             self.log("val_accuracy", accuracy)
+            self.log("f1_score", f1_score)
         else:
             overall_loss, condition_difference, match_loss, non_match_loss, model_output, non_match_model_output = self.reconstruction_step(x, y, x_non_match, y_non_match)
             self.log("val_match_loss", match_loss)

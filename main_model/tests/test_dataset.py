@@ -9,7 +9,7 @@ with open('../configs/config.yml', 'r') as file:
 
 image_dataset = ImageDataset(split=configuration['train_split_name'],
                              dataset_type=configuration['dataset'],
-                             is_close=True, closeness_factor=configuration['closeness_factor'], augmented=True)
+                             is_close=True, chosen_classes=configuration['chosen_classes'], augmented=False)
 train_dataloader = DataLoader(image_dataset, batch_size=2, shuffle=True)
 train_features, train_labels, train_non_match_features, train_non_match_labels = next(iter(train_dataloader))
 print(f"labels: {train_labels}")

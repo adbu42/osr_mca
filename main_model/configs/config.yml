@@ -1,15 +1,16 @@
-project_name: "test_simple_with_x32"
+project_name: "test_automatic_osr"
 dataset: "cifar"
-architecture: 'widenet'
+architecture: 'unet'
 batch_size: 128
 checkpoint: 'tests/runs/cluster_checkpoints/original_unet_cifar.ckpt'
-closeness_factor: 0.6
+chosen_classes: [0, 1, 2, 3, 4, 5, 6]
 train_split_name: 'train'
 test_split_name: 'test'
-max_epochs: 15
-switch_epoch: 5
+max_epochs: 1
+switch_epoch: 1
 alpha: 0.9
 lr: 3e-4
 checkpoint_epoch_interval: 5
 augmented: False
 pretraining_checkpoint: null
+calculate_osr: True

@@ -6,7 +6,7 @@ from torchvision.transforms import AutoAugmentPolicy
 
 
 class ImageDataset(Dataset):
-    def __init__(self, split='train', dataset_type='mnist', closeness_factor=1.0, is_close=True, augmented=False):
+    def __init__(self, split='train', dataset_type='mnist', chosen_classes=None, is_close=True, augmented=False):
         self.image_key = 'image'
         self.augment_transform = None
         if dataset_type == 'mnist':
@@ -54,10 +54,9 @@ class ImageDataset(Dataset):
                 v2.Normalize(self.mean, self.std)
             ])
 
-        chosen_classes = len(image_dataset_huggingface.unique('label')) * closeness_factor
         if is_close:
             self.image_dataset = image_dataset_huggingface.filter(
-                lambda data_point: data_point['label'] <= chosen_classes)
+                lambda data_point: data_point['label'] in chosen_classes)
             self.label_name = 'label'
         elif dataset_type == 'cifar_more' and not is_close:
             self.image_dataset = image_dataset_huggingface_more.filter(
@@ -65,7 +64,7 @@ class ImageDataset(Dataset):
             self.label_name = 'fine_label'
         else:
             self.image_dataset = image_dataset_huggingface.filter(
-                lambda data_point: data_point['label'] > chosen_classes)
+                lambda data_point: data_point['label'] not in chosen_classes)
             self.label_name = 'label'
 
 
