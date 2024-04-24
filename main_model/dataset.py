@@ -67,6 +67,14 @@ class ImageDataset(Dataset):
                 lambda data_point: data_point['label'] not in chosen_classes)
             self.label_name = 'label'
 
+        if chosen_classes == [3, 4, 5, 6, 7, 8, 9]:
+            self.mapping_vector = [7, 8, 9, 0, 1, 2, 3, 4, 5, 6]
+        elif chosen_classes == [0, 1, 2, 6, 7, 8, 9]:
+            self.mapping_vector = [0, 1, 2, 7, 8, 9, 3, 4, 5, 6]
+        elif dataset_type != 'tiny':
+            self.mapping_vector = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        else:
+            self.mapping_vector = [x for x in range(200)]
 
     def __len__(self):
         return len(self.image_dataset)
@@ -88,7 +96,7 @@ class ImageDataset(Dataset):
         # transformations
         img = self.transform(img)
         non_match_img = self.transform(non_match_img)
-        return img, label, non_match_img, non_match_label
+        return img, self.mapping_vector[label], non_match_img, self.mapping_vector[non_match_label]
 
     def num_classes(self):
         return len(self.image_dataset.unique(self.label_name))

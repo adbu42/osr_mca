@@ -97,7 +97,7 @@ class C2AELightning(pl.LightningModule):
             classification_loss, accuracy, f1_score = self.classification_step(x, y)
             self.log("val_classification_loss", classification_loss)
             self.log("val_accuracy", accuracy)
-            self.log("f1_score", f1_score)
+            self.log("val_f1_score", f1_score)
         else:
             overall_loss, condition_difference, match_loss, non_match_loss, model_output, non_match_model_output = self.reconstruction_step(x, y, x_non_match, y_non_match)
             self.log("val_match_loss", match_loss)

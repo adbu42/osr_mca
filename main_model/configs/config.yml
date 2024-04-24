@@ -1,13 +1,13 @@
-project_name: "test_automatic_osr"
+project_name: "test_new_classes"
 dataset: "cifar"
 architecture: 'unet'
 batch_size: 128
-checkpoint: 'tests/runs/cluster_checkpoints/original_unet_cifar.ckpt'
+checkpoint: 'tests/runs/test_automatic_osr/72i9b8cj/checkpoints/epoch=4-step=1370.ckpt'
 chosen_classes: [0, 1, 2, 3, 4, 5, 6]
 train_split_name: 'train'
 test_split_name: 'test'
-max_epochs: 1
-switch_epoch: 1
+max_epochs: 3
+switch_epoch: 2
 alpha: 0.9
 lr: 3e-4
 checkpoint_epoch_interval: 5
