@@ -1,4 +1,4 @@
-# Open Set Recognition using Masked Conditional Autoencoders
+# Open Set Recognition using Contrastive Conditional Autoencoders
 Traditional machine learning models assume that only images from training data classes, called the closed set, appear in the prediction task. 
 In real-world applications unknown images from outside these classes, called open-set images, can pollute the prediction task, leading to them being wrongly classified as closed-set images. 
 Open-set recognition models address this problem by splitting the prediction task into closed-set classification and differentiation between open- and closed-set images. One State of the Art Open Set Recognition model is C2AE, short for "Class Conditioned Auto-Encoders". 
